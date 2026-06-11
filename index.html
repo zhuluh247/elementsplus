@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Elements+ Massage — Premium Organization</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#09090b;color:#fff;overflow-x:hidden;width:100%}
+.font-display{font-family:'Bricolage Grotesque',sans-serif}
+
+/* Age Gate */
+#age-gate{position:fixed;inset:0;z-index:9999;background:rgba(9,9,11,.98);backdrop-filter:blur(40px);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .5s, visibility .5s}
+#age-gate.hidden{opacity:0;visibility:hidden;pointer-events:none}
+
+/* Animations */
+@keyframes blob{0%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,20px) scale(0.9)}100%{transform:translate(0,0) scale(1)}}
+.animate-blob{animation:blob 7s infinite}
+.animation-delay-2000{animation-delay:2s}
+.animation-delay-4000{animation-delay:4s}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.animate-ticker{animation:ticker 30s linear infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.animate-float{animation:float 3s ease-in-out infinite}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.fade-in-up{animation:fadeInUp .8s ease-out forwards}
+.fade-in-up-delay-1{animation:fadeInUp .8s ease-out .1s forwards;opacity:0}
+.fade-in-up-delay-2{animation:fadeInUp .8s ease-out .2s forwards;opacity:0}
+.fade-in-up-delay-3{animation:fadeInUp .8s ease-out .3s forwards;opacity:0}
+.fade-in-up-delay-4{animation:fadeInUp .8s ease-out .4s forwards;opacity:0}
+@keyframes pulse-ring{0%{transform:scale(.8);opacity:1}100%{transform:scale(2);opacity:0}}
+.pulse-ring{animation:pulse-ring 1.5s cubic-bezier(.215,.61,.355,1) infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer-border{background:linear-gradient(90deg,rgba(99,102,241,.1),rgba(168,85,247,.4),rgba(236,72,153,.4),rgba(99,102,241,.1));background-size:200% 100%;animation:shimmer 3s linear infinite}
+
+/* Utilities */
+.ticker-mask{mask-image:linear-gradient(to right,transparent,black 10%,black 90%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,black 10%,black 90%,transparent)}
+.text-gradient{background:linear-gradient(to bottom,#fff,rgba(255,255,255,.95),rgba(255,255,255,.6));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cta-gradient{background:linear-gradient(to right,#6366f1,#a855f7,#ec4899)}
+.cta-shadow{box-shadow:0 0 40px -10px rgba(99,102,241,.5)}
+.cta-shadow-hover:hover{box-shadow:0 0 60px -15px rgba(168,85,247,.5)}
+.glass{background:rgba(39,39,42,.5);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1)}
+.glass-light{background:rgba(24,24,27,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.05)}
+.service-card:hover .service-icon{transform:scale(1.1);background:rgba(99,102,241,.2)}
+.service-card:hover{border-color:rgba(99,102,241,.3)}
+.time-slot{transition:all 150ms}
+.time-slot:hover{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.5)}
+.time-slot.selected{background:rgba(99,102,241,.3);border-color:#6366f1;color:#fff}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer}
+.noise-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background:url('https://grainy-gradients.vercel.app/noise.svg');opacity:.15;mix-blend-mode:soft-light}
+#three-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;filter:blur(18px) brightness(0.8);opacity:.4}
+.toast{position:fixed;bottom:1rem;right:1rem;left:1rem;z-index:1000;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1)}
+@media(min-width:640px){.toast{left:auto;bottom:2rem;right:2rem;max-width:24rem}}
+.toast.show{transform:translateY(0);opacity:1}
+section{position:relative;z-index:1}
+.payment-option input:checked+div{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.1)}
+.payment-option input:checked+div .pay-check{opacity:1}
+.upload-zone{transition:all 200ms}
+.upload-zone:hover{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.05)}
+.location-option input:checked+div{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.1)}
+.location-option input:checked+div .loc-dot{background:#6366f1;box-shadow:0 0 10px rgba(99,102,241,.5)}
+#map{border-radius:12px;z-index:1}
+.home-badge{background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(168,85,247,.2));border:1px solid rgba(99,102,241,.3)}
+.leaf-dark .leaflet-tile-pane{filter:brightness(.6) contrast(1.1) saturate(.3) hue-rotate(200deg)}
+.leaflet-control-zoom a{background:#27272a!important;color:#a1a1aa!important;border-color:rgba(255,255,255,.1)!important}
+.leaflet-control-attribution{display:none!important}
+.sending-spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+img{max-width:100%;height:auto;object-fit:cover}
+
+/* SPA Views */
+.view{display:none}
+.view.active{display:block;animation:fadeInUp .5s ease-out forwards}
+
+/* Portrait Gallery Grid - 5 Images */
+.gallery-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:8px;
+}
+.gallery-grid img:first-child{
+  grid-row:1 / 3; 
+  aspect-ratio:3/4; 
+  object-fit:cover;
+  width:100%;
+  height:100%;
+  border-radius:12px;
+}
+.gallery-grid img:not(:first-child){
+  aspect-ratio:3/4; 
+  object-fit:cover;
+  width:100%;
+  height:100%;
+  border-radius:12px;
+}
+@media(max-width:640px){
+  .gallery-grid{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto;
+  }
+  .gallery-grid img:first-child{
+    grid-column:1 / -1;
+    grid-row:auto;
+    aspect-ratio:3/4;
+  }
+  .gallery-grid img:not(:first-child){
+    aspect-ratio:3/4;
+  }
+}
+
+.therapist-radio input:checked+div{border-color:rgba(99,102,241,.6);background:rgba(99,102,241,.1);box-shadow:0 0 15px -5px rgba(99,102,241,.5)}
+.service-option input:checked+div{border-color:rgba(99,102,241,.5);background:rgba(99,102,241,.1)}
+</style>
+</head>
+<body>
+<!-- Age Gate Preloader -->
+<div id="age-gate">
+<div class="text-center px-6 max-w-md">
+<div class="h-16 w-16 rounded-full cta-gradient flex items-center justify-center ring-1 ring-white/10 mx-auto mb-8" style="box-shadow: 0 0 30px rgba(99,102,241,.5);"><i data-lucide="layers" class="w-8 h-8 text-white"></i></div>
+<h1 class="text-3xl sm:text-4xl font-medium tracking-tighter text-gradient mb-3">Elements+ Massage</h1>
+<p class="text-zinc-400 text-sm mb-8">This website contains adult content. By entering, you confirm you are of legal age in your jurisdiction.</p>
+<p class="text-2xl font-medium text-white mb-8">Are You 18+?</p>
+<div class="flex flex-col gap-3"><button onclick="enterSite(true)" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow transition-all hover:-translate-y-0.5 text-sm w-full">Yes, I am 18 or older</button> <button onclick="enterSite(false)" class="glass text-zinc-300 font-medium px-8 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all text-sm w-full">No, I am under 18</button></div>
+</div>
+</div>
+<div class="noise-bg"></div>
+<canvas id="three-canvas"></canvas>
+<div id="toast" class="toast glass rounded-2xl p-4 flex items-center gap-3">
+<div id="toast-icon-wrap" class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-5 h-5 text-emerald-400"></i></div>
+<div>
+<p class="font-medium text-sm text-white" id="toast-title">Success!</p>
+<p class="text-xs text-zinc-400" id="toast-message"></p>
+</div>
+</div>
+<!-- Navigation --><nav class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-4 sm:px-6" style="backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); background: rgba(9,9,11,.7);">
+<div class="max-w-7xl mx-auto w-full flex items-center justify-between">
+<a href="#/" class="flex items-center gap-3" onclick="resetToHome()"><div class="h-8 w-8 rounded-full cta-gradient flex items-center justify-center ring-1 ring-white/10" style="box-shadow: 0 0 15px rgba(99,102,241,.5);"><i data-lucide="layers" class="w-4 h-4 text-white"></i></div><span class="font-display font-semibold text-lg tracking-tight">Elements+ Massage</span></a>
+<div id="nav-home-links" class="hidden md:flex items-center gap-8"><a href="#/" onclick="resetToHome()" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Home</a> <a href="#/therapists" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Therapists</a> <a href="#/services" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Services</a> <a href="#/booking" class="text-sm font-medium cta-gradient text-white px-5 py-2 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5">Book Now</a></div>
+<button id="mobile-menu-btn" class="md:hidden text-zinc-400 hover:text-white transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button></div>
+</nav><!-- Mobile Menu -->
+<div id="mobile-menu" class="fixed inset-0 z-40 hidden" style="backdrop-filter: blur(40px); background: rgba(9,9,11,.95);">
+<div class="flex flex-col items-center justify-center h-full gap-8"><a href="#/" onclick="closeMobile()" class="text-2xl text-zinc-300 hover:text-white transition-colors">Home</a> <a href="#/therapists" onclick="closeMobile()" class="text-2xl text-zinc-300 hover:text-white transition-colors">Therapists</a> <a href="#/services" onclick="closeMobile()" class="text-2xl text-zinc-300 hover:text-white transition-colors">Services</a> <a href="#/booking" onclick="closeMobile()" class="text-lg font-medium cta-gradient text-white px-8 py-3 rounded-full">Book Now</a></div>
+</div>
+<!-- =============== HOME VIEW =============== -->
+<div id="view-home" class="view active">
+<section class="relative min-h-screen flex items-center justify-center pt-20 pb-32 px-4">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-blob"></div>
+<div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+<div class="absolute bottom-1/4 left-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+<div class="relative z-10 max-w-7xl mx-auto text-center">
+<div class="fade-in-up">
+<div class="inline-flex items-center gap-2 glass-light rounded-full px-4 py-1.5 mb-8"><span class="relative flex h-2 w-2"><span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span><span class="text-xs font-medium tracking-widest uppercase text-zinc-400">Professional Organization</span></div>
+</div>
+<h1 class="text-5xl sm:text-7xl lg:text-8xl font-medium tracking-tighter leading-none text-gradient fade-in-up-delay-1">Elements+<br /><span class="font-display">Massage Organization</span></h1>
+<p class="mt-8 text-lg font-light text-zinc-400 tracking-tight max-w-2xl mx-auto leading-relaxed fade-in-up-delay-2">Premium wellness delivered by our certified team of professionals. Choose your massage therapist, and let us take care of the rest.</p>
+<div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 fade-in-up-delay-3"><a href="#/therapists" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Meet Our Therapists</a> <a href="#/booking" class="glass text-zinc-300 font-medium px-8 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all flex items-center gap-2">Book Session <i data-lucide="arrow-right" class="w-4 h-4"></i></a></div>
+</div>
+</section>
+<div class="relative z-10 py-6 border-y border-white/5 ticker-mask overflow-hidden">
+<div class="animate-ticker flex gap-12 whitespace-nowrap"><span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="droplets" class="w-3 h-3 text-indigo-400"></i> Nuru Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="flame" class="w-3 h-3 text-purple-400"></i> Lingam Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="heart" class="w-3 h-3 text-pink-400"></i> Erotic Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="dumbbell" class="w-3 h-3 text-emerald-400"></i> Deep Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="cloud" class="w-3 h-3 text-cyan-400"></i> Relaxation</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="wind" class="w-3 h-3 text-orange-400"></i> Swedish Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="home" class="w-3 h-3 text-purple-400"></i> Home Service</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="droplets" class="w-3 h-3 text-indigo-400"></i> Nuru Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="flame" class="w-3 h-3 text-purple-400"></i> Lingam Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="heart" class="w-3 h-3 text-pink-400"></i> Erotic Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="dumbbell" class="w-3 h-3 text-emerald-400"></i> Deep Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="cloud" class="w-3 h-3 text-cyan-400"></i> Relaxation</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="wind" class="w-3 h-3 text-orange-400"></i> Swedish Massage</span> <span class="text-sm text-zinc-600 flex items-center gap-2"><i data-lucide="home" class="w-3 h-3 text-purple-400"></i> Home Service</span></div>
+</div>
+<!-- THE TEAM SECTION -->
+<section id="therapists" class="py-32 relative">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16"><span class="text-xs font-medium tracking-widest uppercase text-indigo-400">The Team</span>
+<h2 class="mt-4 text-4xl sm:text-5xl font-medium tracking-tighter text-gradient">Choose Your Massage Therapist</h2>
+<p class="mt-4 text-lg font-light text-zinc-400 tracking-tight max-w-xl mx-auto">Four certified masseuses. Four unique styles. Click to view profiles and book directly.</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6" id="therapist-grid-home"></div>
+</div>
+</section>
+<!-- BOOK NOW SECTION -->
+<section id="booking" class="py-32 relative">
+<div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+<div class="max-w-7xl mx-auto px-6 relative z-10">
+<div class="text-center mb-16"><span class="text-xs font-medium tracking-widest uppercase text-indigo-400">Book Now</span>
+<h2 class="mt-4 text-4xl sm:text-5xl font-medium tracking-tighter text-gradient">Reserve Your Session</h2>
+</div>
+<div class="max-w-4xl mx-auto">
+<div class="flex items-center justify-center gap-4 mb-12 flex-wrap">
+<div id="step-ind-1" class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full cta-gradient flex items-center justify-center text-xs font-medium text-white">1</div>
+<span class="text-sm font-medium text-white hidden sm:inline">Session</span></div>
+<div class="w-12 h-px bg-zinc-700"></div>
+<div id="step-ind-2" class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500">2</div>
+<span class="text-sm font-medium text-zinc-500 hidden sm:inline">Schedule</span></div>
+<div class="w-12 h-px bg-zinc-700"></div>
+<div id="step-ind-3" class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500">3</div>
+<span class="text-sm font-medium text-zinc-500 hidden sm:inline">Details</span></div>
+<div class="w-12 h-px bg-zinc-700"></div>
+<div id="step-ind-4" class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500">4</div>
+<span class="text-sm font-medium text-zinc-500 hidden sm:inline">Payment</span></div>
+</div>
+<div class="glass rounded-3xl p-10 booking-card">
+<div id="step-1" class="booking-step">
+<h3 class="text-xl font-medium tracking-tight mb-2">Choose Session &amp; Therapist</h3>
+<p class="text-sm text-zinc-400 mb-8">Select your preferred therapist, location, and duration.</p>
+<h4 class="text-sm font-medium text-zinc-300 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-indigo-400"></i> Select Massage Therapist</h4>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8" id="therapist-select-grid"></div>
+<h4 class="text-sm font-medium text-zinc-300 mb-4 flex items-center gap-2"><i data-lucide="hand" class="w-4 h-4 text-purple-400"></i> Massage Type</h4>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="nuru" class="hidden peer" checked="checked" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="droplets" class="w-5 h-5 text-indigo-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Nuru Massage</p><p class="text-xs text-zinc-500 truncate">Full body slide</p></div></div></div></label>
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="lingam" class="hidden peer" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="flame" class="w-5 h-5 text-purple-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Lingam Massage</p><p class="text-xs text-zinc-500 truncate">Sacred healing touch</p></div></div></div></label>
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="erotic" class="hidden peer" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="heart" class="w-5 h-5 text-pink-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Erotic Massage</p><p class="text-xs text-zinc-500 truncate">Sensual full body</p></div></div></div></label>
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="deep" class="hidden peer" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="dumbbell" class="w-5 h-5 text-emerald-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Deep Massage</p><p class="text-xs text-zinc-500 truncate">Intense pressure relief</p></div></div></div></label>
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="relaxation" class="hidden peer" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="cloud" class="w-5 h-5 text-cyan-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Relaxation</p><p class="text-xs text-zinc-500 truncate">Gentle stress relief</p></div></div></div></label>
+<label class="service-option relative cursor-pointer"><input type="radio" name="service" value="swedish" class="hidden peer" /><div class="rounded-xl border border-white/10 p-4 transition-all hover:bg-white/5"><div class="flex items-center gap-3"><i data-lucide="wind" class="w-5 h-5 text-orange-400 flex-shrink-0"></i><div class="min-w-0"><p class="text-sm font-medium truncate">Swedish</p><p class="text-xs text-zinc-500 truncate">Classic flowing strokes</p></div></div></div></label>
+</div>
+<h4 class="text-sm font-medium text-zinc-300 mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-indigo-400"></i> Session Location</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+<label class="location-option relative cursor-pointer"><input type="radio" name="location-type" value="home" class="hidden peer" checked="checked" /><div class="rounded-xl border border-white/10 p-5 transition-all hover:bg-white/5 relative overflow-hidden"><div class="absolute top-0 left-0 right-0 h-0.5 shimmer-border"></div><div class="flex items-start gap-3"><div class="loc-dot w-3 h-3 rounded-full bg-zinc-600 mt-1 flex-shrink-0 transition-all"></div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><p class="text-sm font-medium text-white">🏠 Home Service</p><span class="text-[10px] font-medium tracking-wider uppercase px-2 py-0.5 rounded-full home-badge text-indigo-300">+$50</span></div><p class="text-xs text-zinc-500">We come to your location.</p></div></div></div></label>
+<label class="location-option relative cursor-pointer"><input type="radio" name="location-type" value="incall" class="hidden peer" /><div class="rounded-xl border border-white/10 p-5 transition-all hover:bg-white/5"><div class="flex items-start gap-3"><div class="loc-dot w-3 h-3 rounded-full bg-zinc-600 mt-1 flex-shrink-0 transition-all"></div><div><p class="text-sm font-medium text-white">💆 Our Studio</p><p class="text-xs text-zinc-500">Visit our private massage room.</p></div></div></div></label>
+</div>
+<h4 class="text-sm font-medium text-zinc-300 mb-4 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-emerald-400"></i> Duration</h4>
+<div class="flex flex-wrap gap-3 mb-8">
+<label class="cursor-pointer"><input type="radio" name="duration" value="60" class="hidden peer" checked="checked" /><div class="time-slot rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-zinc-400 transition-all">60 min</div></label>
+<label class="cursor-pointer"><input type="radio" name="duration" value="90" class="hidden peer" /><div class="time-slot rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-zinc-400 transition-all">90 min</div></label>
+<label class="cursor-pointer"><input type="radio" name="duration" value="120" class="hidden peer" /><div class="time-slot rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-zinc-400 transition-all">120 min</div></label>
+</div>
+<div class="rounded-xl bg-zinc-900/50 border border-white/5 p-4 mb-8 flex items-center justify-between"><span class="text-sm text-zinc-500">Estimated Total</span><span id="price-preview" class="text-2xl font-medium tracking-tight text-white">$150</span></div>
+<button onclick="goToStep(2)" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2 w-full sm:w-auto justify-center">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+<div id="step-2" class="booking-step hidden">
+<h3 class="text-xl font-medium tracking-tight mb-2">Schedule</h3>
+<p class="text-sm text-zinc-400 mb-6">Pick your date and time.</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">Date</label><input type="date" id="booking-date" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" /></div>
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">Time</label><select id="booking-time-select" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors appearance-none cursor-pointer">
+<option value="">Select a time</option>
+<option value="9:00 AM">9:00 AM</option>
+<option value="10:00 AM">10:00 AM</option>
+<option value="11:00 AM">11:00 AM</option>
+<option value="12:00 PM">12:00 PM</option>
+<option value="1:00 PM">1:00 PM</option>
+<option value="2:00 PM">2:00 PM</option>
+<option value="3:00 PM">3:00 PM</option>
+<option value="4:00 PM">4:00 PM</option>
+<option value="5:00 PM">5:00 PM</option>
+<option value="6:00 PM">6:00 PM</option>
+<option value="7:00 PM">7:00 PM</option>
+<option value="8:00 PM">8:00 PM</option>
+<option value="9:00 PM">9:00 PM</option>
+</select></div>
+</div>
+<div id="home-address-section">
+<h4 class="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2"><i data-lucide="home" class="w-4 h-4 text-indigo-400"></i> Your Address</h4>
+<input type="text" id="home-address" placeholder="Enter your full home address..." class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors mb-4" />
+<div id="map" class="w-full h-80 rounded-xl border border-white/10 mb-3 leaf-dark"></div>
+<div class="flex items-center gap-2 text-xs text-zinc-500"><i data-lucide="info" class="w-3 h-3"></i><span id="map-coords">Click the map to set your location</span></div>
+</div>
+<div id="studio-info-section" class="hidden">
+<div class="rounded-xl bg-zinc-900/50 border border-white/5 p-5 mt-2">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="map-pin" class="w-5 h-5 text-indigo-400"></i></div>
+<div>
+<p class="text-sm font-medium text-zinc-200">Our Private Studio</p>
+<p class="text-xs text-zinc-500 mt-1">Address will be shared upon booking confirmation.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row gap-3 mt-8"><button onclick="goToStep(1)" class="glass text-zinc-300 font-medium px-6 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all flex items-center gap-2 justify-center"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button> <button onclick="goToStep(3)" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2 justify-center">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+</div>
+<div id="step-3" class="booking-step hidden">
+<h3 class="text-xl font-medium tracking-tight mb-2">Your Details</h3>
+<p class="text-sm text-zinc-400 mb-6">We'll send a confirmation to your email.</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">First Name</label><input type="text" id="first-name" placeholder="Jane" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors" /></div>
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">Last Name</label><input type="text" id="last-name" placeholder="Doe" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors" /></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">Email</label><input type="email" id="email" placeholder="jane@example.com" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors" /></div>
+<div><label class="text-sm font-medium text-zinc-300 mb-2 block">Phone</label><input type="tel" id="phone" placeholder="+1 (555) 000-0000" class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors" /></div>
+</div>
+<div class="mb-6"><label class="text-sm font-medium text-zinc-300 mb-2 block">Health Information</label><textarea id="notes" rows="3" placeholder="Any health problems, medications, injuries..." class="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"></textarea></div>
+<div class="rounded-xl bg-indigo-500/5 border border-indigo-500/20 p-4 mb-8 flex items-start gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5"></i>
+<p class="text-xs text-zinc-400 leading-relaxed">Your privacy is our priority. All personal and health information is kept strictly confidential.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-3"><button onclick="goToStep(2)" class="glass text-zinc-300 font-medium px-6 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all flex items-center gap-2 justify-center"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button> <button onclick="goToStep(4)" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2 justify-center">Continue to Payment <i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>
+</div>
+<div id="step-4" class="booking-step hidden">
+<h3 class="text-xl font-medium tracking-tight mb-2">Payment</h3>
+<p class="text-sm text-zinc-400 mb-6">Choose a payment method and upload your receipt.</p>
+<div class="rounded-xl bg-zinc-900/50 border border-white/5 p-5 mb-8">
+<h4 class="text-sm font-medium text-zinc-300 mb-3">Booking Summary</h4>
+<div class="space-y-2 text-sm">
+<div class="flex justify-between"><span class="text-zinc-500">Therapist</span><span id="pay-summary-therapist" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">Service</span><span id="pay-summary-service" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">Location</span><span id="pay-summary-location" class="text-zinc-300">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">Date &amp; Time</span><span id="pay-summary-datetime" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="border-t border-white/5 pt-2 mt-2 flex justify-between"><span class="text-zinc-400 font-medium">Total Due</span><span id="pay-summary-price" class="text-white font-semibold text-lg">$150</span></div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3 mb-8">
+<label class="payment-option relative cursor-pointer"><input type="radio" name="payment-method" value="paypal" class="hidden peer" checked="checked" /><div class="rounded-xl border border-white/10 p-5 transition-all hover:bg-white/5 text-center relative"><div class="pay-check absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center opacity-0 transition-opacity"><i data-lucide="check" class="w-3 h-3 text-white"></i></div><div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-3"><span class="text-2xl">💳</span></div><p class="text-sm font-medium">PayPal</p></div></label>
+<label class="payment-option relative cursor-pointer"><input type="radio" name="payment-method" value="zelle" class="hidden peer" /><div class="rounded-xl border border-white/10 p-5 transition-all hover:bg-white/5 text-center relative"><div class="pay-check absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center opacity-0 transition-opacity"><i data-lucide="check" class="w-3 h-3 text-white"></i></div><div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mx-auto mb-3"><span class="text-2xl">🏦</span></div><p class="text-sm font-medium">Zelle</p></div></label>
+<label class="payment-option relative cursor-pointer"><input type="radio" name="payment-method" value="chime" class="hidden peer" /><div class="rounded-xl border border-white/10 p-5 transition-all hover:bg-white/5 text-center relative"><div class="pay-check absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center opacity-0 transition-opacity"><i data-lucide="check" class="w-3 h-3 text-white"></i></div><div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3"><span class="text-2xl">💚</span></div><p class="text-sm font-medium">Chime</p></div></label>
+</div>
+<div id="payment-details" class="rounded-xl bg-zinc-900/80 border border-indigo-500/20 p-5 mb-8">
+<div class="flex items-start gap-3 mb-3">
+<div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5"><i data-lucide="info" class="w-4 h-4 text-indigo-400"></i></div>
+<div>
+<p class="text-sm font-medium text-zinc-200" id="pay-instruction-title">Send payment via PayPal</p>
+<p class="text-xs text-zinc-500 mt-1">Send the exact amount, then upload a screenshot of your receipt.</p>
+</div>
+</div>
+<div class="space-y-3 mt-4">
+<div class="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3 gap-2"><span class="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Send to</span>
+<div class="flex items-center gap-2 min-w-0"><span class="text-sm font-mono text-zinc-200 truncate" id="pay-email">payments@elementsmassage.com</span><button onclick="copyPaymentEmail()" class="text-zinc-500 hover:text-indigo-400 transition-colors flex-shrink-0"><i data-lucide="copy" class="w-4 h-4"></i></button></div>
+</div>
+<div class="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3"><span class="text-xs text-zinc-500 uppercase tracking-wider">Amount</span><span class="text-sm font-semibold text-white" id="pay-amount">$150</span></div>
+<div class="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3"><span class="text-xs text-zinc-500 uppercase tracking-wider">Note</span><span class="text-sm text-zinc-300">Include your name &amp; date</span></div>
+</div>
+</div>
+<h4 class="text-sm font-medium text-zinc-300 mb-3">Upload Payment Receipt</h4>
+<div id="upload-zone" class="upload-zone rounded-xl border-2 border-dashed border-white/10 p-8 text-center cursor-pointer mb-3 relative"><input type="file" id="receipt-input" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+<div id="upload-placeholder">
+<div class="w-14 h-14 rounded-xl bg-zinc-800 flex items-center justify-center mx-auto mb-4"><i data-lucide="upload-cloud" class="w-7 h-7 text-zinc-500"></i></div>
+<p class="text-sm font-medium text-zinc-300 mb-1">Click to upload or drag &amp; drop</p>
+<p class="text-xs text-zinc-600">PNG, JPG, or PDF up to 10MB</p>
+</div>
+<div id="upload-preview" class="hidden">
+<div class="flex items-center gap-4">
+<div id="preview-thumb" class="w-20 h-20 rounded-xl bg-zinc-800 overflow-hidden flex-shrink-0"></div>
+<div class="text-left flex-1 min-w-0">
+<p class="text-sm font-medium text-zinc-200 truncate" id="preview-filename">receipt.png</p>
+<p class="text-xs text-zinc-500" id="preview-filesize">1.2 MB</p>
+<button onclick="removeReceipt(event)" class="text-xs text-red-400 hover:text-red-300 mt-2 flex items-center gap-1 transition-colors"><i data-lucide="trash-2" class="w-3 h-3"></i> Remove</button></div>
+<div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row gap-3 mt-8"><button onclick="goToStep(3)" class="glass text-zinc-300 font-medium px-6 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all flex items-center gap-2 justify-center"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button> <button onclick="confirmBooking()" id="confirm-btn" class="cta-gradient text-white font-medium px-8 py-3.5 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2 justify-center"><i data-lucide="shield-check" class="w-4 h-4"></i> Confirm Booking</button></div>
+</div>
+<div id="step-success" class="booking-step hidden text-center py-8">
+<div class="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6 animate-float"><i data-lucide="check-circle-2" class="w-10 h-10 text-emerald-400"></i></div>
+<h3 class="text-2xl font-medium tracking-tight mb-2">You're All Set! 🥰</h3>
+<p class="text-zinc-400 text-sm max-w-md mx-auto mb-6 px-2">Your booking and payment receipt have been submitted. Our team will verify your payment and reach out shortly.</p>
+<div class="rounded-xl bg-zinc-900/50 border border-white/5 p-5 max-w-sm mx-auto mb-8">
+<div class="space-y-2 text-sm text-left">
+<div class="flex justify-between"><span class="text-zinc-500">Therapist</span><span id="confirm-therapist" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">When</span><span id="confirm-when" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">Location</span><span id="confirm-location" class="text-zinc-300 text-right ml-2">—</span></div>
+<div class="flex justify-between"><span class="text-zinc-500">Payment</span><span id="confirm-payment" class="text-zinc-300">—</span></div>
+</div>
+</div>
+<a href="#/" onclick="resetBooking()" class="glass text-zinc-300 font-medium px-8 py-3.5 rounded-full hover:bg-zinc-900/30 transition-all text-sm inline-block">Back to Home</a></div>
+</div>
+</div>
+</div>
+</section>
+<!-- SERVICES SECTION -->
+<section id="services" class="py-32 relative">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16"><span class="text-xs font-medium tracking-widest uppercase text-indigo-400">Services &amp; Pricing</span>
+<h2 class="mt-4 text-4xl sm:text-5xl font-medium tracking-tighter text-gradient">Massage Is the New Drug</h2>
+<p class="mt-4 text-lg font-light text-zinc-400 tracking-tight max-w-2xl mx-auto">We utilize multiple techniques as needed to heal your whole body and mind.</p>
+</div>
+<div class="rounded-2xl p-8 mb-10 relative overflow-hidden" style="background: linear-gradient(135deg,rgba(99,102,241,.15),rgba(168,85,247,.1)); border: 1px solid rgba(99,102,241,.25);">
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0"><i data-lucide="home" class="w-7 h-7 text-indigo-400"></i></div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="text-lg font-medium tracking-tight">🏠 Home Service Available</h3>
+<span class="text-[10px] font-medium tracking-wider uppercase px-2 py-0.5 rounded-full home-badge text-indigo-300">Recommended</span></div>
+<p class="text-sm text-zinc-400">We come to you — premium comfort, total privacy. Adds $50 to any session.</p>
+</div>
+<a href="#/booking" class="cta-gradient text-white text-sm font-medium px-6 py-2.5 rounded-full cta-shadow transition-all hover:-translate-y-0.5 flex-shrink-0">Book Home Service</a></div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="droplets" class="w-6 h-6 text-indigo-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Nuru Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">A full body slide experience using special nuru gel. Intimate and deeply relaxing.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-indigo-400">From $100</span></div>
+</div>
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="flame" class="w-6 h-6 text-purple-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Lingam Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">Sacred healing touch that channels energy and releases deep tension.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-purple-400">From $100</span></div>
+</div>
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="heart" class="w-6 h-6 text-pink-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Erotic Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">A sensual full body experience designed to awaken your senses and release tension.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-pink-400">From $100</span></div>
+</div>
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="dumbbell" class="w-6 h-6 text-emerald-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Deep Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">Intense, targeted pressure to break up knots and release chronic tension.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-emerald-400">From $100</span></div>
+</div>
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="cloud" class="w-6 h-6 text-cyan-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Relaxation Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">Gentle, flowing strokes to ease stress and calm your mind.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-cyan-400">From $100</span></div>
+</div>
+<div class="service-card glass rounded-2xl p-8 transition-all duration-500 cursor-pointer group">
+<div class="service-icon w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-6 transition-all duration-300"><i data-lucide="wind" class="w-6 h-6 text-orange-400"></i></div>
+<h3 class="text-xl font-medium tracking-tight mb-3">Swedish Massage</h3>
+<p class="text-sm font-light text-zinc-400 leading-relaxed mb-4">The classic. Flowing strokes to improve circulation and promote total relaxation.</p>
+<div class="flex items-center justify-between"><span class="text-sm text-zinc-500">60 / 90 / 120 min</span><span class="text-sm font-medium text-orange-400">From $100</span></div>
+</div>
+</div>
+<div class="mt-16">
+<h3 class="text-center text-2xl font-medium tracking-tight text-gradient mb-10">Pricing</h3>
+<div class="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="glass rounded-2xl p-6 text-center">
+<p class="text-sm text-zinc-500 font-medium tracking-wider uppercase mb-2">60 Minutes</p>
+<p class="text-4xl font-medium tracking-tighter text-white">$100</p>
+<p class="text-xs text-zinc-600 mt-2">In-call</p>
+<div class="border-t border-white/5 mt-4 pt-4">
+<p class="text-xs text-zinc-500 mb-1">🏠 Home Service</p>
+<p class="text-xl font-medium tracking-tighter text-indigo-400">$150</p>
+</div>
+</div>
+<div class="rounded-2xl p-6 text-center border border-indigo-500/30" style="background: rgba(39,39,42,.7); backdrop-filter: blur(24px); box-shadow: 0 0 40px -10px rgba(99,102,241,.2);">
+<div class="inline-block cta-gradient text-white text-[10px] font-medium px-3 py-0.5 rounded-full mb-2">Popular</div>
+<p class="text-sm text-zinc-500 font-medium tracking-wider uppercase mb-2">90 Minutes</p>
+<p class="text-4xl font-medium tracking-tighter text-white">$145</p>
+<p class="text-xs text-zinc-600 mt-2">In-call</p>
+<div class="border-t border-white/5 mt-4 pt-4">
+<p class="text-xs text-zinc-500 mb-1">🏠 Home Service</p>
+<p class="text-xl font-medium tracking-tighter text-indigo-400">$195</p>
+</div>
+</div>
+<div class="glass rounded-2xl p-6 text-center">
+<p class="text-sm text-zinc-500 font-medium tracking-wider uppercase mb-2">120 Minutes</p>
+<p class="text-4xl font-medium tracking-tighter text-white">$200</p>
+<p class="text-xs text-zinc-600 mt-2">In-call</p>
+<div class="border-t border-white/5 mt-4 pt-4">
+<p class="text-xs text-zinc-500 mb-1">🏠 Home Service</p>
+<p class="text-xl font-medium tracking-tighter text-indigo-400">$250</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ABOUT US SECTION -->
+<section id="about" class="py-32 relative">
+<div class="absolute top-1/2 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+<div class="max-w-7xl mx-auto px-6 relative z-10">
+<div class="grid lg:grid-cols-2 gap-12 items-center">
+<div><span class="text-xs font-medium tracking-widest uppercase text-pink-400">About Us</span>
+<h2 class="mt-4 text-4xl sm:text-5xl font-medium tracking-tighter text-gradient">We Know What You Need</h2>
+<div class="mt-8 space-y-5 text-zinc-400 font-light leading-relaxed text-base">
+<p>We are a <span class="text-white font-medium">licensed massage organization</span> — hardworking, honest, caring, and independent. There's never a dull moment with our team.</p>
+<p>It's not just a massage, <span class="text-white font-medium">it's an experience</span>. We are committed to healing your whole body and mind.</p>
+<p>At your first session, your masseuse will ask about your health to determine how to best treat you. Your comfort is our priority.</p>
+<p>After your massage, you may feel relaxed and a little sleepy, or experience a surge of energy. We recommend <span class="text-white font-medium">drinking plenty of water</span> to flush out released toxins.</p>
+</div>
+<div class="mt-8 flex flex-wrap gap-3">
+<div class="glass-light rounded-full px-4 py-2 text-xs font-medium text-zinc-300 flex items-center gap-2"><i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-400"></i> Licensed Masseuses</div>
+<div class="glass-light rounded-full px-4 py-2 text-xs font-medium text-zinc-300 flex items-center gap-2"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-400"></i> Private &amp; Discreet</div>
+<div class="glass-light rounded-full px-4 py-2 text-xs font-medium text-zinc-300 flex items-center gap-2"><i data-lucide="home" class="w-3.5 h-3.5 text-purple-400"></i> Home Service</div>
+</div>
+</div>
+<div class="relative">
+<div class="rounded-3xl overflow-hidden border border-white/10" style="box-shadow: 0 0 60px -15px rgba(99,102,241,.2);"><img src="https://i.ibb.co/XfN8V37F/file-000000008fa07243b48fa951a6f17171.png" alt="Massage Room" class="w-full h-auto object-cover" /></div>
+<div class="absolute -bottom-4 -right-4 glass rounded-2xl p-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i></div>
+<div>
+<p class="text-sm font-medium">5,000+ Sessions</p>
+<p class="text-xs text-zinc-500">Verified &amp; Trusted</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<footer class="border-t border-white/5 py-16 relative z-10">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-12 mb-12">
+<div>
+<a href="#/" class="flex items-center gap-3 mb-4"><div class="h-8 w-8 rounded-full cta-gradient flex items-center justify-center ring-1 ring-white/10"><i data-lucide="layers" class="w-4 h-4 text-white"></i></div><span class="font-display font-semibold text-lg tracking-tight">Elements+ Massage</span></a>
+<p class="text-sm font-light text-zinc-500 leading-relaxed">Your body deserves the best. Massage is the new drug.</p>
+</div>
+<div>
+<h4 class="text-sm font-medium text-zinc-300 mb-4">Quick Links</h4>
+<ul class="space-y-2">
+<li><a href="#/therapists" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Our Therapists</a></li>
+<li><a href="#/services" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Services &amp; Pricing</a></li>
+<li><a href="#/about" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">About Us</a></li>
+<li><a href="#/booking" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Book a Session</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-sm font-medium text-zinc-300 mb-4">Contact</h4>
+<ul class="space-y-2">
+<li class="flex items-center gap-2 text-sm text-zinc-500"><i data-lucide="phone" class="w-4 h-4 text-zinc-600"></i> (555) 123-4567</li>
+<li class="flex items-center gap-2 text-sm text-zinc-500"><i data-lucide="mail" class="w-4 h-4 text-zinc-600"></i> hello@elementsmassage.com</li>
+<li class="flex items-center gap-2 text-sm text-zinc-500"><i data-lucide="clock" class="w-4 h-4 text-zinc-600"></i> Daily 9am – 9pm</li>
+</ul>
+</div>
+</div>
+<div class="border-t border-white/5 pt-8 text-center">
+<p class="text-xs text-zinc-600">© 2026 Elements+ Massage Organization. All rights reserved.</p>
+</div>
+</div>
+</footer></div>
+<!-- =============== THERAPIST PROFILE VIEW =============== -->
+<div id="view-therapist" class="view">
+<div class="pt-20 pb-32 max-w-5xl mx-auto px-4 sm:px-6"><a href="#/therapists" class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors mb-8"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Therapists</a>
+<div class="grid lg:grid-cols-2 gap-10 items-start">
+<div>
+<div class="gallery-grid rounded-2xl overflow-hidden" id="profile-gallery"></div>
+</div>
+<div>
+<div class="inline-flex items-center gap-2 glass-light rounded-full px-3 py-1 mb-4"><span id="profile-specialty-badge" class="text-xs font-medium tracking-wider uppercase text-indigo-400">Specialty</span></div>
+<h1 id="profile-name" class="text-4xl sm:text-5xl font-medium tracking-tighter text-gradient mb-4">Name</h1>
+<p id="profile-bio" class="text-zinc-400 font-light leading-relaxed mb-8">Bio</p>
+<div class="space-y-4 mb-8">
+<div class="glass rounded-xl p-4 flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="phone" class="w-5 h-5 text-indigo-400"></i></div>
+<div>
+<p class="text-xs text-zinc-500 mb-1">Phone</p>
+<p id="profile-phone" class="text-sm font-medium text-zinc-200">—</p>
+</div>
+</div>
+<div class="glass rounded-xl p-4 flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0"><i data-lucide="mail" class="w-5 h-5 text-purple-400"></i></div>
+<div>
+<p class="text-xs text-zinc-500 mb-1">Email</p>
+<p id="profile-email" class="text-sm font-medium text-zinc-200">—</p>
+</div>
+</div>
+</div>
+<button id="book-therapist-btn" class="w-full cta-gradient text-white font-medium px-8 py-4 rounded-full cta-shadow cta-shadow-hover transition-all hover:-translate-y-0.5 flex items-center gap-2 justify-center text-base"><i data-lucide="calendar" class="w-5 h-5"></i> Book This Therapist</button></div>
+</div>
+</div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import*as THREE from'three';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
+const canvas=document.getElementById('three-canvas');const renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));renderer.setSize(window.innerWidth,window.innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);camera.position.set(0,0,20);
+const pmremGenerator=new THREE.PMREMGenerator(renderer);scene.environment=pmremGenerator.fromScene(new RoomEnvironment(),0.04).texture;
+const colors=[0x6366f1,0xa855f7,0xec4899,0x818cf8];const geometry=new THREE.IcosahedronGeometry(1,0);const material=new THREE.MeshPhysicalMaterial({color:0xffffff,metalness:0.3,roughness:0.3,clearcoat:1.0,clearcoatRoughness:0.2,emissive:0x6366f1,emissiveIntensity:0.06});
+const spheres=[];for(let i=0;i<18;i++){const mesh=new THREE.Mesh(geometry,material.clone());const scale=0.6+Math.random()*1.2;mesh.scale.setScalar(scale);mesh.position.set((Math.random()-.5)*24,(Math.random()-.5)*24,(Math.random()-.5)*8);const color=colors[Math.floor(Math.random()*colors.length)];mesh.material.color=new THREE.Color(color);mesh.material.emissive=new THREE.Color(color);mesh.material.emissiveIntensity=0.06;mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);spheres.push({mesh,vx:(Math.random()-.5)*.015,vy:(Math.random()-.5)*.015,vz:(Math.random()-.5)*.01,rx:(Math.random()-.5)*.005,ry:(Math.random()-.5)*.005});scene.add(mesh);}
+scene.add(new THREE.AmbientLight(0xffffff,0.3));
+function animate(){requestAnimationFrame(animate);spheres.forEach(s=>{s.mesh.position.x+=s.vx;s.mesh.position.y+=s.vy;s.mesh.position.z+=s.vz;s.mesh.rotation.x+=s.rx;s.mesh.rotation.y+=s.ry;if(Math.abs(s.mesh.position.x)>13)s.vx*=-1;if(Math.abs(s.mesh.position.y)>13)s.vy*=-1;if(Math.abs(s.mesh.position.z)>5)s.vz*=-1;});renderer.render(scene,camera);}
+animate();window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+</script>
+<script>
+const TELEGRAM_BOT_TOKEN='8940231968:AAExhOnt4YYA1N-o506dSYui0KGMnyuZzXk';
+const TELEGRAM_CHAT_ID='8790352155';
+
+lucide.createIcons();
+
+// --- Data Store ---
+const therapists = [
+  { id: 1, name: "Emerson Daniela", specialty: "Nuru & Relaxation", color: "#3b82f6", icon: "droplets", phone: "(will be shown after booking)", email: "01danielathor@gmail.com", bio: "Aura is a licensed masseuse specializing in fluid, flowing techniques. She brings a calming presence that melts away tension and restores natural energy. Her Nuru and Relaxation sessions are legendary within the organization.", images: ["https://i.ibb.co/2YPQTWrQ/IMG-20260610-WA0037.jpg","https://i.ibb.co/60bgxd9n/IMG-20260610-WA0036.jpg","https://i.ibb.co/Ld7dYtW3/IMG-20260610-WA0034.jpg","https://i.ibb.co/gbWv2nBt/IMG-20260610-WA0038.jpg","https://i.ibb.co/LXWZBG1g/IMG-20260610-WA0035.jpg"] },
+  { id: 2, name: "Antonia Lopez", specialty: "Deep Tissue & Swedish", color: "#f97316", icon: "flame", phone: "+1 (850) 394-3350", email: "antonialope87@gmail.com", bio: "Fierce and focused, Ember brings the heat. Specializing in Deep Tissue and targeted pressure point therapy, she dissolves knots and chronic pain with precision. Book her if you need real, intensive healing.", images: ["https://i.ibb.co/PvWW4cWC/IMG-20260610-WA0045.jpg","https://i.ibb.co/fj1yMvb/IMG-20260610-WA0039.jpg","https://i.ibb.co/V0YnDrNy/IMG-20260610-WA0040.jpg","https://i.ibb.co/G42GZ1zS/IMG-20260610-WA0043.jpg","https://i.ibb.co/tSQhJwN/IMG-20260610-WA0044.jpg"] },
+  { id: 3, name: "Madison Tay", specialty: "Swedish & Holistic", color: "#10b981", icon: "mountain", phone: "(will be shown after booking)", email: "MadisonT247@gmail.com", bio: "Grounding and deeply nurturing, Terra's touch connects you back to your body. Expert in Swedish and full-body holistic flows, her sessions are a sanctuary for the stressed and overworked.", images: ["https://i.ibb.co/qGfSK3b/IMG-20260610-WA0063.jpg","https://i.ibb.co/K1qS7DJ/IMG-20260610-WA0058.jpg","https://i.ibb.co/gZp0c6ks/IMG-20260610-WA0057.jpg","https://i.ibb.co/qF1LT7Dr/IMG-20260610-WA0050.jpg","https://i.ibb.co/WC8BPmM/IMG-20260610-WA0059.jpg"] },
+  { id: 4, name: "Aria Lux", specialty: "Lingam & Sensual", color: "#06b6d4", icon: "wind", phone: "(will be shown after booking)", email: "aria@elementsmassage.com", bio: "Light, transcendent, and intuitive. Aria specializes in sensory exploration and Lingam arts. Her sessions feel like floating, designed to awaken the senses and elevate the spirit.", images: ["https://i.ibb.co/6Rd8RxZK/IMG-20260610-WA0074.jpg","https://i.ibb.co/sdJvmHwt/IMG-20260610-WA0075.jpg","https://i.ibb.co/B2PpWJbv/IMG-20260610-WA0070.jpg","https://i.ibb.co/B5TQhXpc/IMG-20260610-WA0071.jpg","https://i.ibb.co/1trmB0ys/IMG-20260610-WA0073.jpg"] }
+];
+
+const serviceNames={nuru:'Nuru Massage',lingam:'Lingam Massage',erotic:'Erotic Massage',deep:'Deep Massage',relaxation:'Relaxation Massage',swedish:'Swedish Massage'};
+
+// --- Age Gate ---
+function enterSite(isOldEnough) {
+  document.getElementById('age-gate').classList.add('hidden');
+  if(!isOldEnough) {
+    showToast("Nice Try! 😏", "Enjoy the site anyway.");
+  }
+}
+
+// --- SPA Router ---
+window.addEventListener('hashchange', router);
+window.addEventListener('load', router);
+
+function router() {
+  const hash = window.location.hash || '#/';
+  const viewHome = document.getElementById('view-home');
+  const viewTherapist = document.getElementById('view-therapist');
+  
+  window.scrollTo(0, 0);
+
+  if (hash.startsWith('#/therapist/')) {
+    const id = hash.split('/')[2];
+    viewHome.classList.remove('active');
+    viewTherapist.classList.add('active');
+    renderTherapistProfile(id);
+  } else {
+    viewTherapist.classList.remove('active');
+    viewHome.classList.add('active');
+    
+    setTimeout(() => {
+      if (hash.includes('therapists')) document.getElementById('therapists')?.scrollIntoView({behavior:'smooth'});
+      else if (hash.includes('services')) document.getElementById('services')?.scrollIntoView({behavior:'smooth'});
+      else if (hash.includes('about')) document.getElementById('about')?.scrollIntoView({behavior:'smooth'});
+      else if (hash.includes('booking')) document.getElementById('booking')?.scrollIntoView({behavior:'smooth'});
+    }, 100);
+  }
+  lucide.createIcons();
+}
+
+function resetToHome() { window.location.hash = '#/'; }
+function closeMobile() { document.getElementById('mobile-menu').classList.add('hidden'); }
+
+// --- Render Home Therapist Grid ---
+function renderHomeGrid() {
+  const grid = document.getElementById('therapist-grid-home');
+  grid.innerHTML = therapists.map(t => `
+    <a href="#/therapist/${t.id}" class="group glass rounded-2xl overflow-hidden transition-all duration-300 hover:border-indigo-500/30 block">
+      <div class="aspect-[3/4] overflow-hidden relative">
+        <img src="${t.images[0]}" alt="${t.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
+      </div>
+      <div class="p-4 relative -mt-16 z-10">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full" style="background:${t.color}; box-shadow:0 0 8px ${t.color}"></div>
+          <span class="text-[10px] font-medium tracking-wider uppercase" style="color:${t.color}">${t.specialty}</span>
+        </div>
+        <h3 class="text-lg font-medium tracking-tight">${t.name}</h3>
+        <p class="text-[11px] text-zinc-500 mt-1 line-clamp-2">${t.bio.substring(0, 70)}...</p>
+      </div>
+    </a>
+  `).join('');
+}
+
+// --- Render Therapist Select Grid (Booking Form) ---
+function renderTherapistSelectGrid() {
+  const grid = document.getElementById('therapist-select-grid');
+  grid.innerHTML = therapists.map((t, i) => `
+    <label class="therapist-radio relative cursor-pointer">
+      <input type="radio" name="therapist" value="${t.name}" class="hidden peer" ${i===0?'checked':''}>
+      <div class="rounded-xl border border-white/10 p-3 transition-all hover:bg-white/5 text-center">
+        <img src="${t.images[0]}" class="w-14 h-14 rounded-full mx-auto mb-2 object-cover border-2 border-zinc-700"/>
+        <p class="text-xs font-medium text-zinc-300">${t.name}</p>
+        <p class="text-[10px] text-zinc-500">${t.specialty.split(' & ')[0]}</p>
+      </div>
+    </label>
+  `).join('');
+}
+
+// --- Render Therapist Profile Page ---
+function renderTherapistProfile(id) {
+  const t = therapists.find(th => th.id == id);
+  if(!t) return;
+  document.getElementById('profile-name').textContent = t.name;
+  document.getElementById('profile-bio').textContent = t.bio;
+  document.getElementById('profile-phone').textContent = t.phone;
+  document.getElementById('profile-email').textContent = t.email;
+  const badge = document.getElementById('profile-specialty-badge');
+  badge.textContent = t.specialty;
+  badge.style.color = t.color;
+  const gallery = document.getElementById('profile-gallery');
+  gallery.innerHTML = t.images.map(img => `<img src="${img}" alt="${t.name}" />`).join('');
+  const bookBtn = document.getElementById('book-therapist-btn');
+  bookBtn.onclick = () => {
+    window.location.hash = '#/booking';
+    setTimeout(() => {
+      const radio = document.querySelector(`input[name="therapist"][value="${t.name}"]`);
+      if(radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+    }, 300);
+  };
+  lucide.createIcons();
+}
+
+// --- Booking Logic ---
+let currentStep=1, selectedTime=null, selectedTherapist='Emerson Daniela', selectedService='Nuru Massage', selectedLocation='home', uploadedFile=null, mapLatLng=null;
+const incallPrices={60:100,90:145,120:200};
+const homeExtra=50;
+const paymentEmails={paypal:'payments@elementsmassage.com',zelle:'payments@elementsmassage.com',chime:'payments@elementsmassage.com'};
+const paymentLabels={paypal:'PayPal',zelle:'Zelle',chime:'Chime'};
+
+function getPrice(){const base=incallPrices[document.querySelector('input[name="duration"]:checked')?.value || 60]||100;return selectedLocation==='home'?base+homeExtra:base;}
+function updatePricePreview(){document.getElementById('price-preview').textContent='$'+getPrice();}
+
+const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+document.getElementById('booking-date').value=tomorrow.toISOString().split('T')[0];
+document.getElementById('booking-date').min=tomorrow.toISOString().split('T')[0];
+
+document.addEventListener('change', e => {
+  if(e.target.name === 'duration') {
+    document.querySelectorAll('input[name="duration"]').forEach(x=>x.parentElement.querySelector('.time-slot').classList.remove('selected'));
+    e.target.parentElement.querySelector('.time-slot').classList.add('selected');
+    updatePricePreview();
+  }
+  if(e.target.name === 'location-type') { selectedLocation = e.target.value; updatePricePreview(); }
+  if(e.target.name === 'therapist') { selectedTherapist = e.target.value; }
+  if(e.target.name === 'service') { selectedService = serviceNames[e.target.value] || e.target.value; }
+  if(e.target.name === 'payment-method') { updatePaymentDetails(e.target.value); }
+});
+
+function updatePaymentDetails(method){document.getElementById('pay-email').textContent=paymentEmails[method];document.getElementById('pay-instruction-title').textContent='Send payment via '+paymentLabels[method];document.getElementById('pay-amount').textContent='$'+getPrice();}
+function copyPaymentEmail(){const method=document.querySelector('input[name="payment-method"]:checked').value;navigator.clipboard.writeText(paymentEmails[method]).then(()=>{showToast('Copied!','Email copied to clipboard.');});}
+
+const receiptInput=document.getElementById('receipt-input');
+const uploadZone=document.getElementById('upload-zone');
+receiptInput.addEventListener('change',e=>{if(e.target.files.length>0)handleFile(e.target.files[0]);});
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag-over');});
+uploadZone.addEventListener('dragleave',()=>{uploadZone.classList.remove('drag-over');});
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag-over');if(e.dataTransfer.files.length>0)handleFile(e.dataTransfer.files[0]);});
+
+function handleFile(file){if(file.size>10*1024*1024){showToast('Too Large','File must be under 10MB.',true);return;}uploadedFile=file;document.getElementById('upload-placeholder').classList.add('hidden');document.getElementById('upload-preview').classList.remove('hidden');document.getElementById('preview-filename').textContent=file.name;document.getElementById('preview-filesize').textContent=(file.size/(1024*1024)).toFixed(1)+' MB';const thumb=document.getElementById('preview-thumb');thumb.innerHTML='';if(file.type.startsWith('image/')){const img=document.createElement('img');img.src=URL.createObjectURL(file);img.className='w-full h-full object-cover';thumb.appendChild(img);}else{thumb.innerHTML='<div class="w-full h-full flex items-center justify-center"><i data-lucide="file-text" class="w-8 h-8 text-zinc-500"></i></div>';}lucide.createIcons();}
+function removeReceipt(e){e.preventDefault();e.stopPropagation();uploadedFile=null;receiptInput.value='';document.getElementById('upload-placeholder').classList.remove('hidden');document.getElementById('upload-preview').classList.add('hidden');}
+
+let map,marker;
+function initMap(){if(map) return; map=L.map('map',{zoomControl:true,attributionControl:false}).setView([40.7128,-74.0060],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);map.on('click',function(e){if(marker)map.removeLayer(marker);marker=L.circleMarker(e.latlng,{radius:8,fillColor:'#6366f1',color:'#818cf8',weight:2,opacity:1,fillOpacity:0.8}).addTo(map);mapLatLng=e.latlng;document.getElementById('map-coords').textContent='Location pinned: '+e.latlng.lat.toFixed(4)+', '+e.latlng.lng.toFixed(4);document.getElementById('map-coords').classList.remove('text-zinc-500');document.getElementById('map-coords').classList.add('text-emerald-400');});setTimeout(()=>{map.invalidateSize();},300);}
+
+function goToStep(step){
+  if(step===2){
+    selectedTherapist = document.querySelector('input[name="therapist"]:checked')?.value || 'Emerson Daniela';
+    selectedService = serviceNames[document.querySelector('input[name="service"]:checked')?.value] || 'Nuru Massage';
+    if(selectedLocation==='home'){document.getElementById('home-address-section').classList.remove('hidden');document.getElementById('studio-info-section').classList.add('hidden');}else{document.getElementById('home-address-section').classList.add('hidden');document.getElementById('studio-info-section').classList.remove('hidden');}
+    setTimeout(initMap, 200);
+  }
+  if(step===3){
+    const sel=document.getElementById('booking-time-select');selectedTime=sel.value;
+    if(!selectedTime){sel.classList.add('border-red-500/50');setTimeout(()=>sel.classList.remove('border-red-500/50'),2000);return;}
+  }
+  if(step===4){
+    const firstName=document.getElementById('first-name').value.trim();const email=document.getElementById('email').value.trim();
+    if(!firstName||!email){if(!firstName)document.getElementById('first-name').classList.add('border-red-500/50');if(!email)document.getElementById('email').classList.add('border-red-500/50');setTimeout(()=>{document.getElementById('first-name').classList.remove('border-red-500/50');document.getElementById('email').classList.remove('border-red-500/50');},2000);return;}
+    const dateVal=document.getElementById('booking-date').value;const d=new Date(dateVal+'T00:00:00');const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    document.getElementById('pay-summary-therapist').textContent=selectedTherapist;
+    document.getElementById('pay-summary-service').textContent=selectedService;
+    document.getElementById('pay-summary-location').textContent=selectedLocation==='home'?'🏠 Home Service':'💆 Our Studio';
+    document.getElementById('pay-summary-datetime').textContent=dateStr+' at '+selectedTime;
+    document.getElementById('pay-summary-price').textContent='$'+getPrice();
+    updatePaymentDetails(document.querySelector('input[name="payment-method"]:checked').value);
+  }
+  
+  document.querySelectorAll('.booking-step').forEach(el=>el.classList.add('hidden'));document.getElementById('step-'+step).classList.remove('hidden');
+  for(let i=1;i<=4;i++){const ind=document.getElementById('step-ind-'+i);const circle=ind.querySelector('div');const text=ind.querySelector('span');if(i<=step){circle.className='w-8 h-8 rounded-full cta-gradient flex items-center justify-center text-xs font-medium text-white';if(text)text.className='text-sm font-medium text-white hidden sm:inline';}else{circle.className='w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500';if(text)text.className='text-sm font-medium text-zinc-500 hidden sm:inline';}}
+  if(step===2&&map){setTimeout(()=>map.invalidateSize(),200);}
+  currentStep=step;
+}
+
+async function sendToTelegram(bookingData){
+  const btn=document.getElementById('confirm-btn');btn.disabled=true;btn.innerHTML='<span class="sending-spinner"></span> Sending...';
+  const msg=`🆕 NEW BOOKING\n\n👩‍⚕️ Therapist: ${bookingData.therapist}\n💆 Service: ${bookingData.service}\n📍 Location: ${bookingData.locationType}\n📅 Date: ${bookingData.date}\n🕐 Time: ${bookingData.time}\n\n👤 Client: ${bookingData.firstName} ${bookingData.lastName}\n📧 Email: ${bookingData.email}\n📱 Phone: ${bookingData.phone}\n🏠 Address: ${bookingData.address||'N/A'}\n\n💊 Health: ${bookingData.notes||'None'}\n\n💳 Payment: ${bookingData.paymentMethod}\n💰 Amount: $${bookingData.price}\n🧾 Receipt: ${bookingData.hasReceipt?'✅ Uploaded':'❌ Missing'}`;
+  const textUrl=`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;const textBody=new FormData();textBody.append('chat_id',TELEGRAM_CHAT_ID);textBody.append('text',msg);
+  try{const textRes=await fetch(textUrl,{method:'POST',body:textBody});const textData=await textRes.json();if(!textData.ok)throw new Error('Telegram failed');
+  if(uploadedFile&&uploadedFile.type.startsWith('image/')){const photoUrl=`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;const photoBody=new FormData();photoBody.append('chat_id',TELEGRAM_CHAT_ID);photoBody.append('photo',uploadedFile);photoBody.append('caption',`🧾 Receipt from ${bookingData.firstName}`);try{await fetch(photoUrl,{method:'POST',body:photoBody});}catch(e){}}
+  return true;}catch(err){console.error('Telegram error:',err);showToast('Send Failed','Could not send to Telegram. Check bot token.',true);btn.disabled=false;btn.innerHTML='<i data-lucide="shield-check" class="w-4 h-4"></i> Confirm Booking';lucide.createIcons();return false;}
+}
+
+async function confirmBooking(){
+  if(!uploadedFile){document.getElementById('upload-zone').classList.add('border-red-500/50');showToast('Receipt Required','Please upload your payment receipt.',true);setTimeout(()=>document.getElementById('upload-zone').classList.remove('border-red-500/50'),2000);return;}
+  const dateVal=document.getElementById('booking-date').value;const d=new Date(dateVal+'T00:00:00');const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});const method=document.querySelector('input[name="payment-method"]:checked').value;
+  const bookingData={therapist: selectedTherapist, service: selectedService, locationType:selectedLocation==='home'?'🏠 Home Service':'💆 Our Studio',date:dateStr,time:selectedTime,firstName:document.getElementById('first-name').value.trim(),lastName:document.getElementById('last-name').value.trim(),email:document.getElementById('email').value.trim(),phone:document.getElementById('phone').value.trim(),address:selectedLocation==='home'?document.getElementById('home-address').value.trim():'',notes:document.getElementById('notes').value.trim(),paymentMethod:paymentLabels[method],price:getPrice(),hasReceipt:!!uploadedFile};
+  const sent=await sendToTelegram(bookingData);if(!sent)return;
+  document.getElementById('confirm-therapist').textContent=selectedTherapist;document.getElementById('confirm-when').textContent=dateStr+' at '+selectedTime;document.getElementById('confirm-location').textContent=selectedLocation==='home'?'🏠 Home Service':'💆 Our Studio';document.getElementById('confirm-payment').textContent=paymentLabels[method];
+  document.querySelectorAll('.booking-step').forEach(el=>el.classList.add('hidden'));document.getElementById('step-success').classList.remove('hidden');
+  showToast('Booking Submitted! 🥰','Our team will verify your payment shortly.');
+}
+
+function resetBooking(){currentStep=1;selectedTime=null;uploadedFile=null;receiptInput.value='';document.getElementById('upload-placeholder').classList.remove('hidden');document.getElementById('upload-preview').classList.add('hidden');document.querySelectorAll('.booking-step').forEach(el=>el.classList.add('hidden'));document.getElementById('step-1').classList.remove('hidden');for(let i=1;i<=4;i++){const ind=document.getElementById('step-ind-'+i);const circle=ind.querySelector('div');const text=ind.querySelector('span');if(i===1){circle.className='w-8 h-8 rounded-full cta-gradient flex items-center justify-center text-xs font-medium text-white';if(text)text.className='text-sm font-medium text-white hidden sm:inline';}else{circle.className='w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500';if(text)text.className='text-sm font-medium text-zinc-500 hidden sm:inline';}}const btn=document.getElementById('confirm-btn');btn.disabled=false;btn.innerHTML='<i data-lucide="shield-check" class="w-4 h-4"></i> Confirm Booking';lucide.createIcons();}
+
+function showToast(title,message,isError=false){const toast=document.getElementById('toast');const iconWrap=document.getElementById('toast-icon-wrap');document.getElementById('toast-title').textContent=title;document.getElementById('toast-message').textContent=message;if(isError){iconWrap.className='w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0';iconWrap.innerHTML='<i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>';}else{iconWrap.className='w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0';iconWrap.innerHTML='<i data-lucide="check" class="w-5 h-5 text-emerald-400"></i>';}lucide.createIcons();toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),4000);}
+
+document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
+
+renderHomeGrid();
+renderTherapistSelectGrid();
+updatePricePreview();
+</script>
+</body>
+</html>
