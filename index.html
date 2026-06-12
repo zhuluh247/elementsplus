@@ -677,7 +677,7 @@ function renderTherapistProfile(id) {
 let currentStep=1, selectedTime=null, selectedTherapist='Emerson Daniela', selectedService='Nuru Massage', selectedLocation='home', uploadedFile=null, mapLatLng=null;
 const incallPrices={60:100,90:145,120:200};
 const homeExtra=50;
-const paymentEmails={paypal:'payments@elementsmassage.com',zelle:'payments@elementsmassage.com',chime:'payments@elementsmassage.com'};
+const paymentEmails={paypal:'payments@elementsmassage.com',zelle:'***********',chime:'$yetti083'};
 const paymentLabels={paypal:'PayPal',zelle:'Zelle',chime:'Chime'};
 
 function getPrice(){const base=incallPrices[document.querySelector('input[name="duration"]:checked')?.value || 60]||100;return selectedLocation==='home'?base+homeExtra:base;}
